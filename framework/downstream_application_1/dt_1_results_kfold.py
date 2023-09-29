@@ -8,7 +8,7 @@ from config_dt_1_results import get_config
 from sklearn.model_selection import KFold
 import numpy as np
 import torch
-from models import EmbeddingNetwork
+from models import EmbeddingNetwork, InferenceNetwork
 import statistics
 import os
 import logging
@@ -16,9 +16,12 @@ import sys
 import random
 from utils import load_json, parse_env_spec
 
-def get_embedding(task, embedding_model, device):
+def get_embedding(task, embedding_model, device, pred_model=False):
     with torch.no_grad():
-        task_embedding = embedding_model(torch.Tensor(task).to(device).view(1, -1)).detach().cpu().numpy()[0]
+        if pred_model:
+            task_embedding = embedding_model(torch.Tensor(task).to(device).view(1, -1))[0].detach().cpu().numpy()[0]
+        else:
+            task_embedding = embedding_model(torch.Tensor(task).to(device).view(1, -1)).detach().cpu().numpy()[0]
 
     return task_embedding
 
@@ -84,7 +87,7 @@ def run_techniques(env_name, config):
     logging.info('AA-TA: Test Accuracies: mean: {}, s.d.: {}'.format(statistics.mean(pred_accuracies), statistics.stdev(pred_accuracies)))
     print('AA-TA: Test Accuracies: mean: {}, s.d.: {}'.format(statistics.mean(pred_accuracies), statistics.stdev(pred_accuracies)))
     
-    # 2: AD-TA (Use p_success_agent)
+    # 2: IgnoreTask (Use p_success_agent)
     pred_accuracies = []
     
     for data_test_sub in data_test_folds:
@@ -93,10 +96,10 @@ def run_techniques(env_name, config):
         
         pred_accuracies.append(pred_accuracy)
     
-    logging.info('AD-TA: Test Accuracy: mean: {}, s.d.: {}'.format(statistics.mean(pred_accuracies), statistics.stdev(pred_accuracies)))
-    print('AD-TA: Test Accuracy: mean: {}, s.d.: {}'.format(statistics.mean(pred_accuracies), statistics.stdev(pred_accuracies)))
+    logging.info('IgnoreTask: Test Accuracy: mean: {}, s.d.: {}'.format(statistics.mean(pred_accuracies), statistics.stdev(pred_accuracies)))
+    print('IgnoreTask: Test Accuracy: mean: {}, s.d.: {}'.format(statistics.mean(pred_accuracies), statistics.stdev(pred_accuracies)))
     
-    # 3: AA-TD (Use p_success_task)
+    # 3: IgnoreAgent (Use p_success_task)
     pred_accuracies = []
     
     for data_test_sub in data_test_folds:
@@ -105,10 +108,10 @@ def run_techniques(env_name, config):
         
         pred_accuracies.append(pred_accuracy)
     
-    logging.info('AA-TD: Test Accuracy: mean: {}, s.d.: {}'.format(statistics.mean(pred_accuracies), statistics.stdev(pred_accuracies)))
-    print('AA-TD: Test Accuracy: mean: {}, s.d.: {}'.format(statistics.mean(pred_accuracies), statistics.stdev(pred_accuracies)))
+    logging.info('IgnoreAgent: Test Accuracy: mean: {}, s.d.: {}'.format(statistics.mean(pred_accuracies), statistics.stdev(pred_accuracies)))
+    print('IgnoreAgent: Test Accuracy: mean: {}, s.d.: {}'.format(statistics.mean(pred_accuracies), statistics.stdev(pred_accuracies)))
     
-    #4: AD-TD (Use p_success_agent_task)
+    #4: OPT (Use p_success_agent_task)
     pred_accuracies = []
     
     for data_test_sub in data_test_folds:
@@ -117,8 +120,73 @@ def run_techniques(env_name, config):
         
         pred_accuracies.append(pred_accuracy)
     
-    logging.info('AD-TD: Test Accuracy: mean: {}, s.d.: {}'.format(statistics.mean(pred_accuracies), statistics.stdev(pred_accuracies)))
-    print('AD-TD: Test Accuracy: mean: {}, s.d.: {}'.format(statistics.mean(pred_accuracies), statistics.stdev(pred_accuracies)))
+    logging.info('OPT: Test Accuracy: mean: {}, s.d.: {}'.format(statistics.mean(pred_accuracies), statistics.stdev(pred_accuracies)))
+    print('OPT: Test Accuracy: mean: {}, s.d.: {}'.format(statistics.mean(pred_accuracies), statistics.stdev(pred_accuracies)))
+    
+    #---------
+    
+    model_data = torch.load(f'pred_model_baseline/networks/{env_name}/dim_{config.embedding_dim_pred}/embedding_model.pt')
+    embedding_model = InferenceNetwork(env_name, config.embedding_dim_pred).to(config.device)
+    embedding_model.load_state_dict(model_data['parameters'])
+    embedding_model.eval() 
+    
+    # 5: (Predictive Model) Soft-NN
+
+    soft_nn_pred_accuracies = []
+    
+    t_e = []
+    q_e = []
+    q_p = []
+    for example in data_train:
+        task_embedding = get_embedding(example['s_test']['s'], embedding_model, config.device, pred_model=True)
+        t_e.append(task_embedding)
+        
+        quiz_embeddings = []
+        quiz_perf = []
+        for i, key in enumerate(example['quiz_data']):
+            if i >= config.sub_size:
+                break
+
+            quiz_embeddings.append(get_embedding(example['quiz_data'][key]['s'], embedding_model, config.device, pred_model=True))
+            quiz_perf.append(example['quiz_data'][key]['o'])
+        
+        q_e.append(quiz_embeddings)
+        q_p.append(quiz_perf)  
+    
+    best_beta = 0
+    best_train_acc = -np.inf
+    betas = [0.01 * i for i in range(0, 100)]
+    for beta in betas:
+        preds = []
+        for task_embedding, quiz_embeddings, quiz_perf in zip(t_e, q_e, q_p):
+            preds.append(get_soft_NN_prediction(task_embedding, quiz_embeddings, quiz_perf, beta=beta))
+        train_acc = evaluate_technique(preds, data_train)
+        if train_acc > best_train_acc:
+            best_beta = beta
+            best_train_acc = train_acc
+    
+    for data_test_sub in data_test_folds:
+        soft_nn_predictions = []
+    
+        for example in data_test_sub:
+            task_embedding = get_embedding(example['s_test']['s'], embedding_model, config.device, pred_model=True)
+        
+            quiz_embeddings = []
+            quiz_perf = []
+            for i, key in enumerate(example['quiz_data']):
+                if i >= config.sub_size:
+                    break
+
+                quiz_embeddings.append(get_embedding(example['quiz_data'][key]['s'], embedding_model, config.device, pred_model=True))
+                quiz_perf.append(example['quiz_data'][key]['o']) 
+          
+            soft_nn_predictions.append(get_soft_NN_prediction(task_embedding, quiz_embeddings, quiz_perf, beta=best_beta))
+        
+        pred_accuracy = evaluate_technique(soft_nn_predictions, data_test_sub)
+        soft_nn_pred_accuracies.append(pred_accuracy)
+    
+    logging.info('(PredModel) Soft-NN (beta={}): Test Accuracy: mean: {}, s.d.: {}'.format(best_beta, statistics.mean(soft_nn_pred_accuracies), statistics.stdev(soft_nn_pred_accuracies)))
+    print('(PredModel) Soft-NN (beta={}): Test Accuracy: mean: {}, s.d.: {}'.format(best_beta, statistics.mean(soft_nn_pred_accuracies), statistics.stdev(soft_nn_pred_accuracies)))
     
     #---------
     
@@ -127,7 +195,7 @@ def run_techniques(env_name, config):
     embedding_model.load_state_dict(model_data['parameters'])
     embedding_model.eval() 
     
-    # 5: Soft-NN
+    # 6: (Ours) Soft-NN
 
     soft_nn_pred_accuracies = []
     
@@ -182,8 +250,8 @@ def run_techniques(env_name, config):
         pred_accuracy = evaluate_technique(soft_nn_predictions, data_test_sub)
         soft_nn_pred_accuracies.append(pred_accuracy)
     
-    logging.info('Soft-NN (beta={}): Test Accuracy: mean: {}, s.d.: {}'.format(best_beta, statistics.mean(soft_nn_pred_accuracies), statistics.stdev(soft_nn_pred_accuracies)))
-    print('Soft-NN (beta={}): Test Accuracy: mean: {}, s.d.: {}'.format(best_beta, statistics.mean(soft_nn_pred_accuracies), statistics.stdev(soft_nn_pred_accuracies)))
+    logging.info('(Ours) Soft-NN (beta={}): Test Accuracy: mean: {}, s.d.: {}'.format(best_beta, statistics.mean(soft_nn_pred_accuracies), statistics.stdev(soft_nn_pred_accuracies)))
+    print('(Ours) Soft-NN (beta={}): Test Accuracy: mean: {}, s.d.: {}'.format(best_beta, statistics.mean(soft_nn_pred_accuracies), statistics.stdev(soft_nn_pred_accuracies)))
     
 if __name__ == "__main__":
     run_id = np.random.randint(10000, 99999)

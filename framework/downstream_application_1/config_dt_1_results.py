@@ -14,9 +14,13 @@ def get_config(args=None):
     parser.add_argument('--num_splits', type=int, default=10)
     parser.add_argument('--quiz_size', type=int, default=50)
     parser.add_argument('--sub_size', type=int, default=1)
-
+    
+    # Ours
     parser.add_argument('--embedding_dim', type=int, default=1)
     parser.add_argument('--embedding_net_path', type=str, default="runs_train_embedding")
+    
+    # PredModel
+    parser.add_argument('--embedding_dim_pred', type=int, default=1)
     
     config = parser.parse_args()
     

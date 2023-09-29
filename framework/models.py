@@ -111,3 +111,75 @@ class EmbeddingNetwork(nn.Module):
         x = self.fc3(x)
 
         return x
+    
+class InferenceNetwork(nn.Module):
+    def __init__(self, env_name, embedding_dim):
+        super(InferenceNetwork, self).__init__()
+        if env_name == 'MultiKeyNav':
+            self.fc1 = nn.Linear(7, 128)
+            self.fc2 = nn.Linear(128, 128)
+            self.fc3_mu = nn.Linear(128, embedding_dim)       
+            self.fc3_log_sigma = nn.Linear(128, embedding_dim)    
+        elif env_name == 'CartPoleVar':
+            self.fc1 = nn.Linear(7, 128)
+            self.fc2 = nn.Linear(128, 128)
+            self.fc3_mu = nn.Linear(128, embedding_dim)       
+            self.fc3_log_sigma = nn.Linear(128, embedding_dim)       
+        elif env_name == 'PointMass':
+            self.fc1 = nn.Linear(7, 128)
+            self.fc2 = nn.Linear(128, 128)
+            self.fc3_mu = nn.Linear(128, embedding_dim)       
+            self.fc3_log_sigma = nn.Linear(128, embedding_dim)    
+        elif env_name == 'BasicKarel':
+            self.fc1 = nn.Linear(88, 128)
+            self.fc2 = nn.Linear(128, 128)
+            self.fc3_mu = nn.Linear(128, embedding_dim)       
+            self.fc3_log_sigma = nn.Linear(128, embedding_dim)            
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.fc2(x)
+        x = F.relu(x)
+        mu = self.fc3_mu(x)
+        log_sigma = self.fc3_log_sigma(x)
+        sigma = torch.exp(log_sigma)
+        
+        q_z = torch.distributions.Normal(loc=mu, scale=sigma)
+        z = q_z.rsample()
+
+        return z, q_z
+
+class DynamicsNetwork(nn.Module):
+    def __init__(self, env_name, embedding_dim):
+        super(DynamicsNetwork, self).__init__()
+        if env_name == 'MultiKeyNav':
+            self.fc1 = nn.Linear(embedding_dim + 5 + 7, 128)
+            self.fc2 = nn.Linear(128, 128)
+            self.fc3_s_n = nn.Linear(128, 5)
+            self.fc3_r = nn.Linear(128, 1)
+        elif env_name == 'CartPoleVar':
+            self.fc1 = nn.Linear(embedding_dim + 5 + 1, 128)
+            self.fc2 = nn.Linear(128, 128)
+            self.fc3_s_n = nn.Linear(128, 5)
+            self.fc3_r = nn.Linear(128, 1)    
+        elif env_name == 'PointMass':
+            self.fc1 = nn.Linear(embedding_dim + 4 + 2, 128)
+            self.fc2 = nn.Linear(128, 128)
+            self.fc3_s_n = nn.Linear(128, 4)
+            self.fc3_r = nn.Linear(128, 1)  
+        elif env_name == 'BasicKarel':
+            self.fc1 = nn.Linear(embedding_dim + 52 + 6, 128)
+            self.fc2 = nn.Linear(128, 128)
+            self.fc3_s_n = nn.Linear(128, 52)
+            self.fc3_r = nn.Linear(128, 1)        
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = F.relu(x)
+        x = self.fc2(x)
+        x = F.relu(x)
+        s_n = self.fc3_s_n(x)
+        r = self.fc3_r(x)
+
+        return s_n, r    

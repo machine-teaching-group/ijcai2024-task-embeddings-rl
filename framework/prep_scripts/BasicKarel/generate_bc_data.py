@@ -14,7 +14,7 @@ from utils import load_json, dump_json
 def generate_data():
     act_map = {'move': 0, 'turnLeft': 1, 'turnRight': 2, 'pickMarker': 3, 'putMarker': 4, 'finish': 5}
     
-    data_size = len(glob('envs/BasicKarelData/data/train/task/*.json'))
+    data_size = len(glob('envs/data/basic_karel/data/train/task/*.json'))
     env = BasicKarelEnv(failure_gamma=1)
     
     for i in range(4):
@@ -31,8 +31,8 @@ def generate_data():
         examples = []
     
         for idx in tqdm(range(data_size)):
-            seq_data = load_json(f'envs/BasicKarelData/data/train/seq/{idx}_seq.json')
-            task_data = load_json(f'envs/BasicKarelData/data/train/task/{idx}_task.json')
+            seq_data = load_json(f'envs/data/basic_karel/data/train/seq/{idx}_seq.json')
+            task_data = load_json(f'envs/data/basic_karel/data/train/task/{idx}_task.json')
         
             state = env.reset(state=task_data)
             count = 0

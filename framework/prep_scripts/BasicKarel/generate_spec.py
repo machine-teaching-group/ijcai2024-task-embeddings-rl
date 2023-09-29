@@ -14,7 +14,7 @@ def main():
     env = BasicKarelEnv()
     
     tasks = []
-    for file_path in glob('envs/BasicKarelData/data/val/task/*.json'):
+    for file_path in glob('envs/data/basic_karel/data/val/task/*.json'):
         task_data = load_json(file_path) 
         tasks.append({'state': env.state_to_bitmaps(task_data).tolist()})
                                 

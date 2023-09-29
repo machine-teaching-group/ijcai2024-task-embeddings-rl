@@ -104,3 +104,48 @@ def get_trajectory(policy, s, env, max_episode_len, use_env_fn=False):
                 break
 
     return trajectory
+
+def get_trajectory_trans(policy, env_name, env, max_episode_len, one_hot_action=None, n_context_idx=None):
+    """
+    Performs a rollout of the policy from a random task on env and returns a list of transitions ('s', 'a', 'r', 's_n').
+    :param policy: torch.nn.Module
+    :param env_name: str
+    :param env: gym.Env
+    :param max_episode_len: int
+    :param one_hot_action: bool
+    :param n_context_idx: list[int]
+    :returns: list[dict]
+    """
+    solved = False
+    trajectory = []
+    with torch.no_grad():
+        state = env.reset()
+        s_0 = state.tolist()
+        for _ in range(max_episode_len):
+            if env_name == 'PointMass':
+                action, _ = policy.predict(state)
+            else:
+                action = policy.select_action(state)
+            if one_hot_action is not None:
+                action_rep = [0 for _ in range(one_hot_action)]
+                action_rep[action] = 1
+            else:
+                action_rep = action
+                if env_name == 'PointMass':
+                    action_rep = action_rep.tolist()  
+            transition = {'s': state[n_context_idx].tolist() if n_context_idx is not None else state.tolist(), 'a': action_rep}
+            state, reward, done, info = env.step(action)
+            transition['s_n'] = state[n_context_idx].tolist() if n_context_idx is not None else state.tolist()
+            if done:
+                if env_name == 'PointMass':
+                    solved = info["success"]
+                elif reward == 1:
+                    solved = True
+                transition['r'] = 1 if solved else 0    
+                trajectory.append(transition)    
+                break  
+            transition['r'] = 0
+            trajectory.append(transition)  
+
+    return s_0, trajectory, solved
+

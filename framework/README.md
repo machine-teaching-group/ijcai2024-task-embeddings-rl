@@ -130,8 +130,26 @@ The data for behavioral cloning should be prepared as a JSON file with the follo
    ```bash
    python3 embedding_network/train_embedding_network.py
    ```
+
+5. Collect transitions from the environment:
+
+   ```bash
+   python3 pred_model_baseline/gen_data.py
+   ```   
+
+6. Preprocess the collected transitions:
+
+   ```bash
+   python3 pred_model_baseline/build_dataset.py
+   ```  
+
+7. Train the predictive model baseline:
+
+   ```bash
+   python3 pred_model_baseline/train.py
+   ```  
    
-5. Generate the benchmarks for the downstream applications:
+8. Generate the benchmarks for the downstream applications:
 
    ```bash
    python3 downstream_application_1/generate_dt_1_data.py
@@ -143,6 +161,7 @@ The data for behavioral cloning should be prepared as a JSON file with the follo
    ```bash
    python3 downstream_application_1/dt_1_results_kfold.py
    python3 downstream_application_2/dt_2_results.py
+   python3 downstream_application_2/dt_2_results_pred_model.py
    python3 downstream_application_2/dt_2_results_vis_sim.py
    python3 downstream_application_2/dt_2_results_edit_distance.py
    python3 downstream_application_2/dt_2_results_opt.py
@@ -194,8 +213,26 @@ The data for behavioral cloning should be prepared as a JSON file with the follo
    ```bash
    python3 embedding_network/train_embedding_network.py --prefix "MultiKeyNavExps" --env_spec_path "specs/MultiKeyNav_spec.json" --embedding_dim 6 --batch_size 128 --num_epochs 300 --log_interval 1 --val_interval 1 --lr 0.001 --alpha 0.4 --device "cuda"
    ```
+
+5. Collect transitions from the environment:
+
+   ```bash
+   python3 pred_model_baseline/gen_data.py --prefix "MultiKeyNavExps" --env_spec_path "specs/MultiKeyNav_spec.json" --num_trajectories 10000
+   ```   
+
+6. Preprocess the collected transitions:
+
+   ```bash
+   python3 pred_model_baseline/build_dataset.py --env_spec_path "specs/MultiKeyNav_spec.json"
+   ```  
+
+7. Train the predictive model baseline:
+
+   ```bash
+   python3 pred_model_baseline/train.py --env_spec_path "specs/MultiKeyNav_spec.json" --embedding_dim 6 --batch_size 512 --num_epochs 500 --log_interval 1 --val_interval 1 --lr 0.001 --alpha_1 1 --alpha_2 1 --alpha_3 0.01 --device "cuda"
+   ```
    
-5. Generate the benchmarks for the downstream applications:
+8. Generate the benchmarks for the downstream applications:
 
    ```bash
    python3 downstream_application_1/generate_dt_1_data.py --prefix "MultiKeyNavExps" --env_spec_path "specs/MultiKeyNav_spec.json" --max_episode_len 40 --quiz_size 20 --train_size 5000 --test_size 5000 --num_samples_1 500 --num_samples_2 10 --num_samples_3 10 --num_samples_4 10000
@@ -203,11 +240,12 @@ The data for behavioral cloning should be prepared as a JSON file with the follo
    python3 downstream_application_2/generate_reference_tasks.py --prefix "MultiKeyNavExps" --env_spec_path "specs/MultiKeyNav_spec.json" --max_episode_len 40 --num_reference_tasks 5 --pool_size 500 --num_samples_2 10
    ```
    
-6. Evaluate the techniques on the benchmarks:
+9. Evaluate the techniques on the benchmarks:
 
    ```bash
-   python3 downstream_application_1/dt_1_results_kfold.py --prefix "MultiKeyNavExps" --env_spec_path "specs/MultiKeyNav_spec.json" --num_splits 10 --quiz_size 20 --sub_size 10 --embedding_dim 6
+   python3 downstream_application_1/dt_1_results_kfold.py --prefix "MultiKeyNavExps" --env_spec_path "specs/MultiKeyNav_spec.json" --num_splits 10 --quiz_size 20 --sub_size 10 --embedding_dim 6 --embedding_dim_pred 6
    python3 downstream_application_2/dt_2_results.py --prefix "MultiKeyNavExps" --env_spec_path "specs/MultiKeyNav_spec.json" --num_options 10 --start_idx 0 --num_examples 50 --embedding_dim 6 --k 3
+   python3 downstream_application_2/dt_2_results_pred_model.py --prefix "MultiKeyNavExps" --env_spec_path "specs/MultiKeyNav_spec.json" --embedding_dim_pred 6 --num_options 10 --start_idx 0 --num_examples 50 --k 3
    python3 downstream_application_2/dt_2_results_vis_sim.py --prefix "MultiKeyNavExps" --num_options 10 --start_idx 0 --num_examples 50 --k 3
    python3 downstream_application_2/dt_2_results_edit_distance.py --prefix "MultiKeyNavExps" --num_options 10 --start_idx 0 --num_examples 50 --k 3
    python3 downstream_application_2/dt_2_results_opt.py --prefix "MultiKeyNavExps" --env_spec_path "specs/MultiKeyNav_spec.json" --num_options 10 --start_idx 0 --num_examples 50 --num_samples_1 100 --num_samples_2 10 --max_episode_len 40 --pop_frac 1 --k 3
@@ -258,8 +296,26 @@ The data for behavioral cloning should be prepared as a JSON file with the follo
    ```bash
    python3 embedding_network/train_embedding_network.py --prefix "CartPoleVarExps" --env_spec_path "specs/CartPoleVar_spec.json" --embedding_dim 3 --batch_size 128 --num_epochs 500 --log_interval 1 --val_interval 1 --lr 0.001 --alpha 0.4 --device "cuda"
    ```
+
+5. Collect transitions from the environment:
+
+   ```bash
+   python3 pred_model_baseline/gen_data.py --prefix "CartPoleVarExps" --env_spec_path "specs/CartPoleVar_spec.json" --num_trajectories 10000
+   ```   
+
+6. Preprocess the collected transitions:
+
+   ```bash
+   python3 pred_model_baseline/build_dataset.py --env_spec_path "specs/CartPoleVar_spec.json"
+   ```  
+
+7. Train the predictive model baseline:
+
+   ```bash
+   python3 pred_model_baseline/train.py --env_spec_path "specs/CartPoleVar_spec.json" --embedding_dim 3 --batch_size 512 --num_epochs 500 --log_interval 1 --val_interval 1 --lr 0.001 --alpha_1 1 --alpha_2 1 --alpha_3 0.01 --device "cuda"
+   ```     
    
-5. Generate the benchmarks for the downstream applications:
+8. Generate the benchmarks for the downstream applications:
 
    ```bash
    python3 downstream_application_1/generate_dt_1_data.py --prefix "CartPoleVarExps" --env_spec_path "specs/CartPoleVar_spec.json" --max_episode_len 200 --quiz_size 20 --train_size 5000 --test_size 5000 --num_samples_1 500 --num_samples_2 1 --num_samples_3 1 --num_samples_4 10000
@@ -267,11 +323,12 @@ The data for behavioral cloning should be prepared as a JSON file with the follo
    python3 downstream_application_2/generate_reference_tasks.py --prefix "CartPoleVarExps" --env_spec_path "specs/CartPoleVar_spec.json" --max_episode_len 200 --num_reference_tasks 5 --pool_size 500 --num_samples_2 1
    ```
    
-6. Evaluate the techniques on the benchmarks:
+9. Evaluate the techniques on the benchmarks:
 
    ```bash
-   python3 downstream_application_1/dt_1_results_kfold.py --prefix "CartPoleVarExps" --env_spec_path "specs/CartPoleVar_spec.json" --num_splits 10 --quiz_size 20 --sub_size 10 --embedding_dim 3
+   python3 downstream_application_1/dt_1_results_kfold.py --prefix "CartPoleVarExps" --env_spec_path "specs/CartPoleVar_spec.json" --num_splits 10 --quiz_size 20 --sub_size 10 --embedding_dim 3 --embedding_dim_pred 3
    python3 downstream_application_2/dt_2_results.py --prefix "CartPoleVarExps" --env_spec_path "specs/CartPoleVar_spec.json" --num_options 10 --embedding_dim 3 --k 3
+   python3 downstream_application_2/dt_2_results_pred_model.py --prefix "CartPoleVarExps" --env_spec_path "specs/CartPoleVar_spec.json" --embedding_dim_pred 3 --num_options 10 --start_idx 0 --num_examples 50 --k 3
    python3 downstream_application_2/dt_2_results_vis_sim.py --prefix "CartPoleVarExps" --num_options 10 --start_idx 0 --num_examples 50 --k 3 --num_examples 50
    python3 downstream_application_2/dt_2_results_edit_distance.py --prefix "CartPoleVarExps" --num_options 10 --start_idx 0 --num_examples 50 --k 3
    python3 downstream_application_2/dt_2_results_opt.py --prefix "CartPoleVarExps" --env_spec_path "specs/CartPoleVar_spec.json" --num_options 10 --start_idx 0 --num_examples 50 --num_samples_1 1 --num_samples_2 1 --max_episode_len 200 --pop_frac 1 --k 3
@@ -308,6 +365,24 @@ The data for behavioral cloning should be prepared as a JSON file with the follo
    ```bash
    python3 embedding_network/train_embedding_network.py --prefix "PointMassExps" --env_spec_path "specs/PointMass_spec.json" --embedding_dim 3 --batch_size 128 --num_epochs 300 --log_interval 1 --val_interval 1 --lr 0.001 --alpha 0.4 --device "cuda" 
    ``` 
+
+4. Collect transitions from the environment:
+
+   ```bash
+   python3 pred_model_baseline/gen_data.py --prefix "PointMassExps" --env_spec_path "specs/PointMass_spec.json" --num_trajectories 10000
+   ```   
+
+5. Preprocess the collected transitions:
+
+   ```bash
+   python3 pred_model_baseline/build_dataset.py --env_spec_path "specs/PointMass_spec.json"
+   ```  
+
+6. Train the predictive model baseline:
+
+   ```bash
+   python3 pred_model_baseline/train.py --env_spec_path "specs/PointMass_spec.json" --embedding_dim 3 --batch_size 512 --num_epochs 500 --log_interval 1 --val_interval 1 --lr 0.001 --alpha_1 1 --alpha_2 1 --alpha_3 0.01 --device "cuda"
+   ```  
 
 ## Karel Environment
 
@@ -389,3 +464,21 @@ The data for behavioral cloning should be prepared as a JSON file with the follo
    ```bash
    python3 embedding_network/train_embedding_network.py --prefix "BasicKarelExps" --env_spec_path "specs/BasicKarel_spec.json" --embedding_dim 1 --batch_size 128 --num_epochs 300 --log_interval 1 --val_interval 1 --lr 0.001 --alpha 0 --device "cuda"
    ``` 
+
+5. Collect transitions from the environment:
+
+   ```bash
+   python3 pred_model_baseline/gen_data.py --prefix "BasicKarelExps" --env_spec_path "specs/BasicKarel_spec.json" --num_trajectories 10000
+   ```   
+
+6. Preprocess the collected transitions:
+
+   ```bash
+   python3 pred_model_baseline/build_dataset.py --env_spec_path "specs/BasicKarel_spec.json"
+   ```  
+
+7. Train the predictive model baseline:
+
+   ```bash
+   python3 pred_model_baseline/train.py --env_spec_path "specs/BasicKarel_spec.json" --embedding_dim 8 --batch_size 512 --num_epochs 500 --log_interval 1 --val_interval 1 --lr 0.001 --alpha_1 1 --alpha_2 1 --alpha_3 0.01 --device "cuda"
+   ```  

@@ -74,7 +74,6 @@ def gen_example_MI(i):
         I_hat_1_2 = estimate_MI(s_1, s_2, env_copy, policies, config.max_episode_len, config.num_samples_1, env_name in ['ICLR18', 'PointMass'])
         I_hat_1_3 = estimate_MI(s_1, s_3, env_copy, policies, config.max_episode_len, config.num_samples_1, env_name in ['ICLR18', 'PointMass'])
 
-        #if env_name in ['ICLR18', 'CartPoleVar']:
         if env_name in ['ICLR18']:
             if I_hat_1_2 > I_hat_1_3:
                 example = {'s_1': {'s': s_1.tolist(), 'expert_trajectory': expert_trajectory_s_1},

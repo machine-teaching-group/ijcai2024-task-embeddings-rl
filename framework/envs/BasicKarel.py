@@ -7,7 +7,7 @@ import json
 from glob import glob
 
 class BasicKarelEnv(Env):
-    def __init__(self, data_path="envs/BasicKarelData/data/train", failure_gamma=0.999):
+    def __init__(self, data_path="envs/data/basic_karel/data/train", failure_gamma=0.999):
         self.data_path = data_path
         self._load_data()
         

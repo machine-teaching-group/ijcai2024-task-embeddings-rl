@@ -19,8 +19,7 @@ def postprocess(config):
     num_parts_MI = len(glob(f'{net_dir}/runs_generate_MI_data/{config.prefix}/MI_OrdinalConstraints/data_train_*.json'))
     num_parts_Norm = len(glob(f'{net_dir}/runs_generate_MI_data/{config.prefix}/Norm_OrdinalConstraints/data_train_*.json'))
     
-    #for constraint_type in [['MI', num_parts_MI], ['Norm', num_parts_Norm]]:
-    for constraint_type in [['Norm', num_parts_Norm]]:
+    for constraint_type in [['MI', num_parts_MI], ['Norm', num_parts_Norm]]:
         for set_type in [['train', config.train_size], ['val', config.val_size], ['test', config.test_size]]:
             first_itr = True
             count = 0
